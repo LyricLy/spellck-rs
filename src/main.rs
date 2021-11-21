@@ -16,6 +16,7 @@ enum RuleType {
     Typographical,
     Style,
     Grammar,
+    Inconsistency,
     Uncategorized,
 }
 
@@ -41,9 +42,9 @@ struct ApiResult {
     matches: Vec<Issue>,
 }
 
-fn normalize(s: &mut str) -> &str {
-    s.make_ascii_lowercase();
-    s.strip_suffix('.').unwrap_or(s)
+fn normalize(s: &str) -> String {
+    let mut c = s.strip_suffix('.').unwrap_or(s).chars();
+    c.next().map(|f| f.to_lowercase().collect::<String>() + c.as_str()).unwrap_or_else(|| String::new())
 }
 
 fn main() {
@@ -55,20 +56,20 @@ fn main() {
     ]).unwrap();
     let res = client.post("https://api.languagetool.org/v2/check").body(body).send().expect("web request failed");
 
-    for mut issue in res.json::<ApiResult>().expect("JSON parsing failure").matches {
+    for issue in res.json::<ApiResult>().expect("JSON parsing failure").matches {
         let annotation_type = match issue.rule.issue_type {
             RuleType::Misspelling | RuleType::Grammar => AnnotationType::Error,
             _ => AnnotationType::Warning,
         };
         let (short_message, message) = if issue.short_message.is_empty() {
-            (normalize(&mut issue.message), "here")
+            (normalize(&issue.message), "here".to_owned())
         } else {
-            (normalize(&mut issue.short_message), normalize(&mut issue.message))
+            (normalize(&issue.short_message), normalize(&issue.message))
         };
         let longer_lived_value;
         let snippet = Snippet {
             title: Some(Annotation {
-                label: Some(short_message),
+                label: Some(&short_message),
                 id: None,
                 annotation_type,
             }),
@@ -89,7 +90,7 @@ fn main() {
                 fold: true,
                 annotations: vec![
                     SourceAnnotation {
-                        label: message,
+                        label: &message,
                         annotation_type,
                         range: (issue.offset, issue.offset+issue.length),
                     },
