@@ -86,7 +86,7 @@ fn main() {
                 source: &text,
                 line_start: 1,
                 origin: None,
-                fold: false,
+                fold: true,
                 annotations: vec![
                     SourceAnnotation {
                         label: message,
