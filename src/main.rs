@@ -46,11 +46,11 @@ fn normalize(s: &str) -> String {
     let mut c = s.strip_suffix('.').unwrap_or(s).chars();
     c.next()
         .map(|f| f.to_lowercase().collect::<String>() + c.as_str())
-        .unwrap_or_else(|| String::new())
+        .unwrap_or_else(String::new)
 }
 
 fn main() {
-    let text = std::env::args().skip(1).next().expect("pass an argument");
+    let text = std::env::args().nth(1).expect("pass an argument");
     let client = reqwest::blocking::Client::new();
     let body = serde_urlencoded::to_string(&[("text", &text[..]), ("language", "en-GB")]).unwrap();
     let res = client
