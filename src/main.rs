@@ -2,7 +2,7 @@ use annotate_snippets::{
     display_list::{DisplayList, FormatOptions},
     snippet::{Annotation, AnnotationType, Slice, Snippet, SourceAnnotation},
 };
-use serde::{Deserialize};
+use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 struct Replacement {
@@ -44,19 +44,26 @@ struct ApiResult {
 
 fn normalize(s: &str) -> String {
     let mut c = s.strip_suffix('.').unwrap_or(s).chars();
-    c.next().map(|f| f.to_lowercase().collect::<String>() + c.as_str()).unwrap_or_else(|| String::new())
+    c.next()
+        .map(|f| f.to_lowercase().collect::<String>() + c.as_str())
+        .unwrap_or_else(|| String::new())
 }
 
 fn main() {
     let text = std::env::args().skip(1).next().expect("pass an argument");
     let client = reqwest::blocking::Client::new();
-    let body = serde_urlencoded::to_string(&[
-        ("text", &text[..]),
-        ("language", "en-GB"),
-    ]).unwrap();
-    let res = client.post("https://api.languagetool.org/v2/check").body(body).send().expect("web request failed");
+    let body = serde_urlencoded::to_string(&[("text", &text[..]), ("language", "en-GB")]).unwrap();
+    let res = client
+        .post("https://api.languagetool.org/v2/check")
+        .body(body)
+        .send()
+        .expect("web request failed");
 
-    for issue in res.json::<ApiResult>().expect("JSON parsing failure").matches {
+    for issue in res
+        .json::<ApiResult>()
+        .expect("JSON parsing failure")
+        .matches
+    {
         let annotation_type = match issue.rule.issue_type {
             RuleType::Misspelling | RuleType::Grammar => AnnotationType::Error,
             _ => AnnotationType::Warning,
@@ -76,7 +83,10 @@ fn main() {
             footer: if issue.replacements.is_empty() {
                 Vec::new()
             } else {
-                longer_lived_value = format!("try replacing the text with \"{}\"", issue.replacements[0].value);
+                longer_lived_value = format!(
+                    "try replacing the text with \"{}\"",
+                    issue.replacements[0].value
+                );
                 vec![Annotation {
                     id: None,
                     label: Some(&longer_lived_value),
@@ -88,13 +98,11 @@ fn main() {
                 line_start: 1,
                 origin: None,
                 fold: true,
-                annotations: vec![
-                    SourceAnnotation {
-                        label: &message,
-                        annotation_type,
-                        range: (issue.offset, issue.offset+issue.length),
-                    },
-                ],
+                annotations: vec![SourceAnnotation {
+                    label: &message,
+                    annotation_type,
+                    range: (issue.offset, issue.offset + issue.length),
+                }],
             }],
             opt: FormatOptions {
                 color: true,
