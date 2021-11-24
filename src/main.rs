@@ -51,16 +51,14 @@ fn normalize(s: &str) -> String {
 
 fn main() {
     let text = std::env::args().nth(1).expect("pass an argument");
-    let client = reqwest::blocking::Client::new();
+
     let body = serde_urlencoded::to_string(&[("text", &text[..]), ("language", "en-GB")]).unwrap();
-    let res = client
-        .post("https://api.languagetool.org/v2/check")
-        .body(body)
-        .send()
+    let res = ureq::post("https://api.languagetool.org/v2/check")
+        .send_string(&body)
         .expect("web request failed");
 
     for issue in res
-        .json::<ApiResult>()
+        .into_json::<ApiResult>()
         .expect("JSON parsing failure")
         .matches
     {
