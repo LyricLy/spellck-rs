@@ -10,7 +10,7 @@ struct Replacement {
 }
 
 #[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "kebab-case")]
 enum RuleType {
     Misspelling,
     Typographical,
@@ -18,6 +18,7 @@ enum RuleType {
     Grammar,
     Inconsistency,
     Uncategorized,
+    NonConformance,
 }
 
 #[derive(Deserialize, Debug)]
